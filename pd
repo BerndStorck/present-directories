@@ -1,0 +1,177 @@
+#! /bin/bash
+#
+# pd
+#
+# Script for listing all directories in the present working directory.
+#
+# Bernd Storck, 2018-04-09
+#
+
+script_name="$(basename "$0")"
+
+function hilfe() {
+	if [ "$(echo "$LANG" | cut -c 1-2)" == "de" ]; then
+
+		echo -e "$script_name (Wie "present directories")\n\n\tEin Shell-Script, das die Verzeichnisse auflistet, die im aktuellen Verzeichnis liegen.\n\t(Inklusive symbolisch verlinkter Verzeichnisse.)"
+		echo 
+		echo "AUFRUF:"
+		echo -e "\t$script_name [-s|-n|-l|--hilf|--help|-h]"
+		echo
+		echo "OPTIONEN:"
+		echo -e "\t-s\tAnzeige nur der Verzeichnisnamen (kurzes Format)." 
+		echo -e "\t-n\twie \"-s\", nur die Verzeichnisnamen werden angezeigt." 
+		echo -e "\t-l\tAnzeige einer ausführlichen Verzeichnisliste im Langformat (ähnlich wie \"ls -l\")." 
+		echo -e "\t-h\tAnzeige dieser Kurzanleitung."
+		echo -e "\t-demo\tführt automatisch vor, was das Programm leistet."
+		echo
+		echo "Wird pd ohne Option aufgerufen, dann listet es je Zeile und Verzeichnis erst die Zugriffsrechte auf, darauf den Account-Namen des Verzeichnisbesitzer und seine User-Id und schließlich abgeteilt und eingeleitet durch \" : \" den Verzeichnisnamen in Anführungszeichen.  Beispielsweise: rwxr-xr-x hannes (1000) : \"Desktop\""
+		echo
+		echo "Am schnellsten verstehen Sie die drei verschiedenen Ausgabeformate, wenn Sie zum Beispiel in Ihrem Heimatverzeichnis nacheinander die drei Kommandos \"$script_name -s\", \"$script_name\" und \"$script_name -l\" geben."
+	else
+		echo -e "$script_name\n\tLists directories in the present working directory, including symbolic linked ones."
+		echo 
+		echo "CALL:"
+		echo -e "\t$script_name [-s|-n|-l|-h|--help]"
+		echo
+		echo "OPTIONS:"
+		echo -e "\t-s\tshort format, lists only directory names." 
+		echo -e "\t-n\tsame line \"-s\"." 
+		echo -e "\t-l\tlong format (similar to \"ls -l\")." 
+		echo -e "\t-h\tshows this short help text."
+		echo -e "\t-demo\tstarts demonstration of usage."
+		echo 
+		echo "Started without any option $script_name will list in any row: the access rights, the file owners name and id and finally the quoted directory name. For example: rwxr-xr-x hannes (1000) : \"Desktop\""
+		echo
+		echo "You may quick understand the three output formats, if you use the command \"$script_name --demo\", which starts a short demonstration of usage."
+	fi
+}
+
+function demo() {
+
+  clear
+
+  if [ "$(echo "$LANG" | cut -c 1-2)" != "de" ]; then
+	echo "Demonstration, how to use \"$script_name\"."
+	echo "-------------------------------"
+	sleep 1
+	echo 
+	echo -n "1. \"$script_name -s\""
+	sleep 3
+	echo " (list only names)"
+	sleep 2
+	echo
+	echo "Changing directory, going in your home dir."
+	cd ~
+	pwd
+	sleep 3
+	echo -e "\nCalling \"$script_name -s\":\n"
+	sleep 4
+	pd -s
+
+	sleep 5
+	clear
+	echo "Demonstration, how to use \"$script_name\"."
+	echo "-------------------------------"
+	sleep 1
+	echo 
+	echo "2. \"$script_name\" (default command)"
+	sleep 2
+	echo
+	echo "In your home dir \"$HOME\"."
+	sleep 4
+	echo -e "\nCalling \"$script_name\":\n"
+	sleep 4
+	pd
+	sleep 3 
+	echo -e "\nThis stands for: rights <directory owner> (owners user id) : \"directory name\""
+
+	sleep 11
+	clear
+	echo "Demonstration, how to use \"$script_name\"."
+	echo "-------------------------------"
+	sleep 1
+	echo 
+	echo "3. \"$script_name -l\" (long output)"
+	sleep 2
+	echo
+	echo "In your home dir \"$HOME\"."
+	sleep 3
+	echo -e "\nCalling \"$script_name -l\":\n"
+	sleep 5
+	pd -l
+	sleep 4
+	echo -e "\nCall \"man ls\" for further information about the meaning of the columns in long output format."
+
+  else
+	echo "Demonstration: Wie \"$script_name\" benutzt wird."
+	echo "-------------------------------------"
+	sleep 1
+	echo 
+	echo -n "1. \"$script_name -s\""
+	sleep 3
+	echo " (nur die Namen anzeigen)"
+	sleep 2
+	echo
+	echo "Wechsel in Ihr persönliches Verzeichnis:"
+	cd ~
+	pwd
+	sleep 3
+	echo -e "\nDas Kommando \"$script_name -s\" wird gegeben:\n"
+	sleep 4
+	pd -s
+
+	sleep 5
+	clear
+	echo "Demonstration: Wie \"$script_name\" benutzt wird."
+	echo "-------------------------------------"
+	sleep 1
+	echo 
+	echo "2. \"$script_name\""
+	sleep 2
+	echo
+	echo "In Ihrem persönlichen Verzeichnis \"$HOME\"."
+	sleep 4
+	echo -e "\nDas Kommando \"$script_name\" wird gegeben:\n"
+	sleep 4
+	pd
+	sleep 3 
+	echo -e "\nDas bedeutet: Rechte Verzeichnisbesitzer (Besitzer-ID) : \"Verzeichnisname\""
+
+	sleep 11
+	clear
+	echo "Demonstration: Wie \"$script_name\" benutzt wird."
+	echo "-------------------------------------"
+	sleep 1
+	echo 
+	echo "3. \"$script_name -l\" (langes Ausgabeformat)"
+	sleep 2
+	echo
+	echo "In Ihrem persönlichen Verzeichnis \"$HOME\"."
+	sleep 3
+	echo -e "\nDas Kommando \"$script_name -l\" wird gegeben:\n"
+	sleep 5
+	pd -l
+	sleep 4
+	echo -e "\nUm genaueres über die Bedeutung der Spalten des langen Ausgabeformats zu erfahren, lesen Sie bitte Erklärungen zum langen Ausgabeformat des Kommandos ls! $script_name benutzt für sein langes Ausgabeformat dieselben Spalten - mit Ausnahme des ersten Zeichens jeder Zeile, das ls benutzt, um die Dateiart anzugeben und das $script_name nicht verwendet, weil $script_name grundsätzlich nur Verzeichnisse auflistet."
+  fi
+
+  cd - 1> /dev/null 2>&1
+}
+
+case "$1" in
+  -h|--help|--hilf)
+	hilfe
+	;;
+  -s|-n|-k)
+	stat -L --format="%N >>>>>%F" ./* | grep -e ">>>>>Verzeichnis$" -e ">>>>>directory" | sed "s/>>>>>.*//" | sed "s:'./:\":" | sed "s/'/\"/"
+	;;
+  -l)
+	ls -HldQ ./* | grep "^d" | sed "s:\"./:\":" | cut -c 2-
+	;;
+  --demo)
+	demo 
+	;;
+  *)
+	stat -L --printf="%A %U (%u) : %N (%F)\n" ./* | grep -e "(Verzeichnis)$" -e "(directory)$" | sed "s/(Verzeichnis)//" | sed "s/(directory)//" | sed "s:'./:\":" | sed "s/'/\"/" | cut -c 2-
+	;;
+esac
