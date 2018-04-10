@@ -1,10 +1,10 @@
 #! /bin/bash
 #
-# pd
+# pd - Version 1.0.1
 #
 # Script for listing all directories in the present working directory.
 #
-# Bernd Storck, 2018-04-09
+# Bernd Storck, 2018-04-10
 #
 
 script_name="$(basename "$0")"
@@ -27,6 +27,7 @@ function hilfe() {
 		echo "Wird pd ohne Option aufgerufen, dann listet es je Zeile und Verzeichnis erst die Zugriffsrechte auf, darauf den Account-Namen des Verzeichnisbesitzer und seine User-Id und schließlich abgeteilt und eingeleitet durch \" : \" den Verzeichnisnamen in Anführungszeichen.  Beispielsweise: rwxr-xr-x hannes (1000) : \"Desktop\""
 		echo
 		echo "Am schnellsten verstehen Sie die drei verschiedenen Ausgabeformate, wenn Sie zum Beispiel in Ihrem Heimatverzeichnis nacheinander die drei Kommandos \"$script_name -s\", \"$script_name\" und \"$script_name -l\" geben."
+
 	else
 		echo -e "$script_name\n\tLists directories in the present working directory, including symbolic linked ones."
 		echo 
@@ -35,7 +36,7 @@ function hilfe() {
 		echo
 		echo "OPTIONS:"
 		echo -e "\t-s\tshort format, lists only directory names." 
-		echo -e "\t-n\tsame line \"-s\"." 
+		echo -e "\t-n\tsame like \"-s\"." 
 		echo -e "\t-l\tlong format (similar to \"ls -l\")." 
 		echo -e "\t-h\tshows this short help text."
 		echo -e "\t-demo\tstarts demonstration of usage."
@@ -159,19 +160,23 @@ function demo() {
 }
 
 case "$1" in
-  -h|--help|--hilf)
-	hilfe
-	;;
-  -s|-n|-k)
-	stat -L --format="%N >>>>>%F" ./* | grep -e ">>>>>Verzeichnis$" -e ">>>>>directory" | sed "s/>>>>>.*//" | sed "s:'./:\":" | sed "s/'/\"/"
+  -s|-n)
+	stat -L --format="%N >>>>>%F" ./*                                      | \
+	grep -e ">>>>>Verzeichnis$" -e ">>>>>directory$" | sed "s/ >>>>>.*//"  | \
+	sed "s:'./:\":" | sed "s/'/\"/"
 	;;
   -l)
-	ls -HldQ ./* | grep "^d" | sed "s:\"./:\":" | cut -c 2-
+	ls -HldQ ./* | grep "^d" | sed "s:\"\./:\":" | cut -c 2-
+	;;
+  -h|--help|--hilf)
+	hilfe
 	;;
   --demo)
 	demo 
 	;;
   *)
-	stat -L --printf="%A %U (%u) : %N (%F)\n" ./* | grep -e "(Verzeichnis)$" -e "(directory)$" | sed "s/(Verzeichnis)//" | sed "s/(directory)//" | sed "s:'./:\":" | sed "s/'/\"/" | cut -c 2-
+	stat -L --printf="%A %U (%u) : %N (%F)\n" ./*                                                    | \
+	grep -e "(Verzeichnis)$" -e "(directory)$" | sed "s/ (Verzeichnis)$//" | sed "s/ (directory)$//" | \
+	sed "s:'./:\":" | sed "s/'/\"/" | cut -c 2-
 	;;
 esac
