@@ -1,0 +1,28 @@
+
+----------------------------------------------------------------------
+               pd - present directories - Version 2.0.0
+----------------------------------------------------------------------
+
+*Einsatzvoraussetzungen*
+
+Das Script benutzt ab der Version 2.0.0 ein Zusatzprogramm aus dem 
+Paket bsdmainutils. Bitte installieren Sie dieses Paket etwa mit dem 
+Kommando
+
+	sudo apt install bsdmainutils
+
+Oder vom Superuser-Account "root" aus mit
+
+	apt install bsdmainutils
+
+Das Programm muss in Ihrem Suchpfad liegen. Der Suchpfad läßt sich 
+anzeigen durch
+
+	echo $PATH
+
+Typischer und angemessene Ablageort für dieses Shell-Script ist eines 
+beiden folgenden Verzeichnisse:
+
+	~/bin
+
+	/usr/local/bin 
