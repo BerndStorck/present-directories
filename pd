@@ -1,110 +1,127 @@
 #! /bin/bash
 #
-# pd - Version 1.0.1
+# pd - Version 2.0.0
 #
 # Script for listing all directories in the present working directory.
 #
-# Bernd Storck, 2018-04-10
+# Bernd Storck, 2018-04-13
 #
 
 script_name="$(basename "$0")"
+if [[ "$1" == "" ]]; then
+	target="./"
+elif [[ "$2" != "" ]]; then
+	target="$2/"
+elif [[ "$1" != "" ]]; then
+	case "$1" in
+	  -c|-l|-s|-n)
+		target="./"
+		;;
+	  *)
+		target="$1/"
+	esac
+fi
 
 function hilfe() {
 	if [ "$(echo "$LANG" | cut -c 1-2)" == "de" ]; then
 
 		echo -e "$script_name (Wie "present directories")\n\n\tEin Shell-Script, das die Verzeichnisse auflistet, die im aktuellen Verzeichnis liegen.\n\t(Inklusive symbolisch verlinkter Verzeichnisse.)"
-		echo 
-		echo "AUFRUF:"
-		echo -e "\t$script_name [-s|-n|-l|--hilf|--help|-h]"
-		echo
-		echo "OPTIONEN:"
-		echo -e "\t-s\tAnzeige nur der Verzeichnisnamen (kurzes Format)." 
-		echo -e "\t-n\twie \"-s\", nur die Verzeichnisnamen werden angezeigt." 
-		echo -e "\t-l\tAnzeige einer ausführlichen Verzeichnisliste im Langformat (ähnlich wie \"ls -l\")." 
-		echo -e "\t-h\tAnzeige dieser Kurzanleitung."
-		echo -e "\t-demo\tführt automatisch vor, was das Programm leistet."
-		echo
-		echo "Wird pd ohne Option aufgerufen, dann listet es je Zeile und Verzeichnis erst die Zugriffsrechte auf, darauf den Account-Namen des Verzeichnisbesitzer und seine User-Id und schließlich abgeteilt und eingeleitet durch \" : \" den Verzeichnisnamen in Anführungszeichen.  Beispielsweise: rwxr-xr-x hannes (1000) : \"Desktop\""
-		echo
-		echo "Am schnellsten verstehen Sie die drei verschiedenen Ausgabeformate, wenn Sie zum Beispiel in Ihrem Heimatverzeichnis nacheinander die drei Kommandos \"$script_name -s\", \"$script_name\" und \"$script_name -l\" geben."
+			echo 
+			echo "AUFRUF:"
+			echo -e "\t$script_name [-c|-C|-s|-n|-l|--hilf|--help|-h]"
+			echo
+			echo "OPTIONEN:"
+			echo -e "\t-c\tAnzeige der Verzeichnisnamen in Spalten (ähnlich der Ausgabe von  \"ls */ -d\")." 
+			echo -e "\t-C\tKompakte Anzeige der Verzeichnisnamen in Spalten (\"ls */ -d\")." 
+			echo -e "\t-s\tAnzeige nur der Verzeichnisnamen (kurzes Format)." 
+			echo -e "\t-n\twie \"-s\", nur die Verzeichnisnamen werden angezeigt." 
+			echo -e "\t-l\tAnzeige einer ausführlichen Verzeichnisliste im Langformat (ähnlich wie \"ls -l\")." 
+			echo -e "\t-h\tAnzeige dieser Kurzanleitung."
+			echo -e "\t-demo\tführt automatisch vor, was das Programm leistet."
+			echo
+			echo "Wird pd ohne Option aufgerufen, dann listet es je Zeile und Verzeichnis erst die Zugriffsrechte auf, darauf den Account-Namen des Verzeichnisbesitzer und seine User-Id und schließlich abgeteilt und eingeleitet durch \" : \" den Verzeichnisnamen in Anführungszeichen.  Beispielsweise: rwxr-xr-x hannes (1000) : \"Desktop\""
+			echo
+			echo "Am schnellsten verstehen Sie die drei verschiedenen Ausgabeformate, wenn Sie zum Beispiel in Ihrem Heimatverzeichnis nacheinander die drei Kommandos \"$script_name -s\", \"$script_name\" und \"$script_name -l\" geben."
 
 	else
 		echo -e "$script_name\n\tLists directories in the present working directory, including symbolic linked ones."
-		echo 
-		echo "CALL:"
-		echo -e "\t$script_name [-s|-n|-l|-h|--help]"
-		echo
-		echo "OPTIONS:"
-		echo -e "\t-s\tshort format, lists only directory names." 
-		echo -e "\t-n\tsame like \"-s\"." 
-		echo -e "\t-l\tlong format (similar to \"ls -l\")." 
-		echo -e "\t-h\tshows this short help text."
-		echo -e "\t-demo\tstarts demonstration of usage."
-		echo 
-		echo "Started without any option $script_name will list in any row: the access rights, the file owners name and id and finally the quoted directory name. For example: rwxr-xr-x hannes (1000) : \"Desktop\""
-		echo
-		echo "You may quick understand the three output formats, if you use the command \"$script_name --demo\", which starts a short demonstration of usage."
-	fi
+			echo 
+			echo "CALL:"
+			echo -e "\t$script_name [-c|-C|-s|-n|-l|-h|--help]"
+			echo
+			echo "OPTIONS:"
+			echo -e "\t-c\tlists directory names in columns (similar as the command  \"ls */ -d\")." 
+			echo -e "\t-C\tcompact list of directory names in columns (\"ls */ -d\")." 
+			echo -e "\t-s\tshort format, lists only directory names." 
+			echo -e "\t-n\tsame like \"-s\"." 
+			echo -e "\t-l\tlong format (similar to \"ls -l\")." 
+			echo -e "\t-h\tshows this short help text."
+			echo -e "\t-demo\tstarts demonstration of usage."
+			echo 
+			echo "Started without any option $script_name will list in any row: the access rights, the file owners name and id and finally the quoted directory name. For example: rwxr-xr-x hannes (1000) : \"Desktop\""
+			echo
+			echo "You may quick understand the three output formats, if you use the command \"$script_name --demo\", which starts a short demonstration of usage."
+			fi
 }
 
 function demo() {
 
-  clear
-
-  if [ "$(echo "$LANG" | cut -c 1-2)" != "de" ]; then
-	echo "Demonstration, how to use \"$script_name\"."
-	echo "-------------------------------"
-	sleep 1
-	echo 
-	echo -n "1. \"$script_name -s\""
-	sleep 3
-	echo " (list only names)"
-	sleep 2
-	echo
-	echo "Changing directory, going in your home dir."
-	cd ~
-	pwd
-	sleep 3
-	echo -e "\nCalling \"$script_name -s\":\n"
-	sleep 4
-	pd -s
-
-	sleep 5
 	clear
-	echo "Demonstration, how to use \"$script_name\"."
-	echo "-------------------------------"
-	sleep 1
-	echo 
-	echo "2. \"$script_name\" (default command)"
-	sleep 2
-	echo
-	echo "In your home dir \"$HOME\"."
-	sleep 4
-	echo -e "\nCalling \"$script_name\":\n"
-	sleep 4
-	pd
-	sleep 3 
-	echo -e "\nThis stands for: rights <directory owner> (owners user id) : \"directory name\""
 
-	sleep 11
-	clear
-	echo "Demonstration, how to use \"$script_name\"."
-	echo "-------------------------------"
-	sleep 1
-	echo 
-	echo "3. \"$script_name -l\" (long output)"
-	sleep 2
-	echo
-	echo "In your home dir \"$HOME\"."
-	sleep 3
-	echo -e "\nCalling \"$script_name -l\":\n"
-	sleep 5
-	pd -l
-	sleep 4
-	echo -e "\nCall \"man ls\" for further information about the meaning of the columns in long output format."
+		if [ "$(echo "$LANG" | cut -c 1-2)" != "de" ]; then
+			echo "Demonstration, how to use \"$script_name\"."
+				echo "-------------------------------"
+				sleep 1
+				echo 
+				echo -n "1. \"$script_name -s\""
+				sleep 3
+				echo " (list only names)"
+				sleep 2
+				echo
+				echo "Changing directory, going in your home dir."
+				cd ~
+				pwd
+				sleep 3
+				echo -e "\nCalling \"$script_name -s\":\n"
+				sleep 4
+				pd -s
 
-  else
-	echo "Demonstration: Wie \"$script_name\" benutzt wird."
+				sleep 5
+				clear
+				echo "Demonstration, how to use \"$script_name\"."
+				echo "-------------------------------"
+				sleep 1
+				echo 
+				echo "2. \"$script_name\" (default command)"
+				sleep 2
+				echo
+				echo "In your home dir \"$HOME\"."
+				sleep 4
+				echo -e "\nCalling \"$script_name\":\n"
+				sleep 4
+				pd
+				sleep 3 
+				echo -e "\nThis stands for: rights <directory owner> (owners user id) : \"directory name\""
+
+				sleep 11
+				clear
+				echo "Demonstration, how to use \"$script_name\"."
+				echo "-------------------------------"
+				sleep 1
+				echo 
+				echo "3. \"$script_name -l\" (long output)"
+				sleep 2
+				echo
+				echo "In your home dir \"$HOME\"."
+				sleep 3
+				echo -e "\nCalling \"$script_name -l\":\n"
+				sleep 5
+				pd -l
+				sleep 4
+				echo -e "\nCall \"man ls\" for further information about the meaning of the columns in long output format."
+
+		else
+			echo "Demonstration: Wie \"$script_name\" benutzt wird."
 	echo "-------------------------------------"
 	sleep 1
 	echo 
@@ -159,24 +176,49 @@ function demo() {
   cd - 1> /dev/null 2>&1
 }
 
-case "$1" in
-  -s|-n)
-	stat -L --format="%N >>>>>%F" ./*                                      | \
-	grep -e ">>>>>Verzeichnis$" -e ">>>>>directory$" | sed "s/ >>>>>.*//"  | \
-	sed "s:'./:\":" | sed "s/'/\"/"
-	;;
-  -l)
-	ls -HldQ ./* | grep "^d" | sed "s:\"\./:\":" | cut -c 2-
-	;;
-  -h|--help|--hilf)
-	hilfe
-	;;
-  --demo)
-	demo 
-	;;
-  *)
-	stat -L --printf="%A %U (%u) : %N (%F)\n" ./*                                                    | \
-	grep -e "(Verzeichnis)$" -e "(directory)$" | sed "s/ (Verzeichnis)$//" | sed "s/ (directory)$//" | \
-	sed "s:'./:\":" | sed "s/'/\"/" | cut -c 2-
-	;;
-esac
+
+if [ "$1" == "" ]; then
+	stat -L --printf="%A %U (%u) : %N (%F)\n" "$target"*   | \
+	grep -e "(Verzeichnis)$" -e "(directory)$"             | \
+	sed "s/ (Verzeichnis)$//" | sed "s/ (directory)$//"    | \
+	sed "s= : '= : \"=" | sed "s= : \"\.\/= : \"=" |  sed "s/'$/\"/" | cut -c 2-
+
+else
+
+	case "$1" in
+	  -c)
+		stat -L --format="%n %F" "$target"* | grep "Verzeichnis$" | \
+		sed "s/ Verzeichnis$//" | sed "s:^\./::" | column 
+		;;
+	  -C)
+		if [[ "$2" != "" ]]; then
+			target="$2/"
+		else
+			target=""
+		fi
+		ls -d "$target"*/
+		;;
+	  -s|-n)
+		stat -L --format="%N >>>>>%F" "$target"*                                 | \
+		grep -e ">>>>>Verzeichnis$" -e ">>>>>directory$" | sed "s/ >>>>>.*//"  | \
+		sed "s:'$target:\":" | sed "s/'$/\"/"
+		;;
+	  -l)
+		ls -HldQ "$target"* | grep "^d" | sed "s:\"\./:\":" | cut -c 2-
+		;;
+	  -h|--help|--hilf)
+		hilfe
+		;;
+	  --demo)
+		demo 
+		;;
+	  *)
+		stat -L --printf="%A %U (%u) : %N (%F)\n" "$target"*   | \
+		grep -e "(Verzeichnis)$" -e "(directory)$"             | \
+		sed "s/ (Verzeichnis)$//" | sed "s/ (directory)$//"    | \
+		sed "s= : '= : \"=" | sed "s= : \"\.= : \"=" |  sed "s/'$/\"/" | cut -c 2-
+		;;
+	esac
+
+fi
+
