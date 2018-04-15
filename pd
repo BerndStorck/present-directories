@@ -1,11 +1,13 @@
 #!/bin/bash
 #
-# pd - Version 2.1.0
+# pd - present directories
 #
 # Script for listing all directories in the present working directory.
 #
 # Bernd Storck, 2018-04-15
 #
+
+version=2.1.1
 
 script_name="$(basename "$0")"
 if [[ "$1" == "" ]]; then
@@ -28,7 +30,7 @@ function hilfe() {
 		echo -e "$script_name (Wie "present directories")\n\n\tEin Shell-Script, das die Verzeichnisse auflistet, die im aktuellen Verzeichnis liegen.\n\t(Inklusive symbolisch verlinkter Verzeichnisse.)"
 			echo 
 			echo "AUFRUF:"
-			echo -e "\t$script_name [-c|-C|-s|-n|-l|--hilf|--help|-h]"
+			echo -e "\t$script_name [-c|-C|-s|-n|-l|--hilf|--help|-h|-v]"
 			echo
 			echo "OPTIONEN:"
 			echo -e "\t-c\tAnzeige der Verzeichnisnamen in Spalten (ähnlich der Ausgabe von  \"ls */ -d\")." 
@@ -38,6 +40,7 @@ function hilfe() {
 			echo -e "\t-l\tAnzeige einer ausführlichen Verzeichnisliste im Langformat (ähnlich wie \"ls -l\")." 
 			echo -e "\t-h\tAnzeige dieser Kurzanleitung."
 			echo -e "\t-demo\tführt automatisch vor, was das Programm leistet."
+			echo -e "\t-v\tnennt die Versionsnummer des Progamms."
 			echo
 			echo "Wird pd ohne Option aufgerufen, dann listet es je Zeile und Verzeichnis erst die Zugriffsrechte auf, darauf den Account-Namen des Verzeichnisbesitzer und seine User-Id und schließlich abgeteilt und eingeleitet durch \" : \" den Verzeichnisnamen in Anführungszeichen.  Beispielsweise: rwxr-xr-x hannes (1000) : \"Desktop\""
 			echo
@@ -47,7 +50,7 @@ function hilfe() {
 		echo -e "$script_name\n\tLists directories in the present working directory, including symbolic linked ones."
 			echo 
 			echo "CALL:"
-			echo -e "\t$script_name [-c|-C|-s|-n|-l|-h|--help]"
+			echo -e "\t$script_name [-c|-C|-s|-n|-l|-h|--help|-v]"
 			echo
 			echo "OPTIONS:"
 			echo -e "\t-c\tlists directory names in columns (similar as the command  \"ls */ -d\")." 
@@ -57,6 +60,7 @@ function hilfe() {
 			echo -e "\t-l\tlong format (similar to \"ls -l\")." 
 			echo -e "\t-h\tshows this short help text."
 			echo -e "\t-demo\tstarts demonstration of usage."
+			echo -e "\t-v\tshows the version number of the program."
 			echo 
 			echo "Started without any option $script_name will list in any row: the access rights, the file owners name and id and finally the quoted directory name. For example: rwxr-xr-x hannes (1000) : \"Desktop\""
 			echo
@@ -210,6 +214,12 @@ else
 		;;
 	  --demo)
 		demo 
+		;;
+	  -v|-V)
+		echo "pd (present directories), version $version"
+		if [[ "$script_name" != "pd" ]]; then
+			echo "(Current script name: $script_name.)"
+		fi
 		;;
 	  *)    # default action of the script:
 		LANG=C stat -L --printf="%A %U (%u) : %N (%F)\n" "$target"*   | \
