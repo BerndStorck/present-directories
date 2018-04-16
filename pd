@@ -7,30 +7,34 @@
 # Bernd Storck, 2018-04-15
 #
 
-version=2.1.1
-
+version=2.2.0
 script_name="$(basename "$0")"
-if [[ "$1" == "" ]]; then
-	target="./"
-elif [[ "$2" != "" ]]; then
-	target="$2/"
-elif [[ "$1" != "" ]]; then
-	case "$1" in
-	  -c|-l|-s|-n)
-		target="./"
-		;;
-	  *)
-		target="$1/"
-	esac
-fi
+
+function show_call_format() {
+	if [ "$(echo "$LANG" | cut -c 1-2)" == "de" ]; then
+		echo "Jede der folgenden Zeilen ist ein Beispiel für einen formal richtigen Aufruf des Programms."
+	else
+		echo "Each of the following lines is an example for a correct program call."
+	fi
+
+	echo 
+	echo -e "\t$script_name"
+	echo -e "\t$script_name /var\n"
+	echo -e "\t$script_name -c"
+	echo -e "\t$script_name -c /home\n"
+	echo -e "\t$script_name -s"
+	echo -e "\t$script_name -s /etc\n"
+	echo -e "\t$script_name -l"
+	echo -e "\t$script_name -l /usr/local\n"
+}
 
 function hilfe() {
 	if [ "$(echo "$LANG" | cut -c 1-2)" == "de" ]; then
 
-		echo -e "$script_name (Wie "present directories")\n\n\tEin Shell-Script, das die Verzeichnisse auflistet, die im aktuellen Verzeichnis liegen.\n\t(Inklusive symbolisch verlinkter Verzeichnisse.)"
+		echo -e "$script_name ("present directories")\n\n\tEin Shell-Script, das die Verzeichnisse auflistet, die im aktuellen Verzeichnis liegen.\n\t(Inklusive symbolisch verlinkter Verzeichnisse.)"
 			echo 
 			echo "AUFRUF:"
-			echo -e "\t$script_name [-c|-C|-s|-n|-l|--hilf|--help|-h|-v]"
+			echo -e "\t$script_name [-c|-C|-s|-n|-l|--hilf|--help|-h|-b|-v|-V]" [verzeichnispfad]
 			echo
 			echo "OPTIONEN:"
 			echo -e "\t-c\tAnzeige der Verzeichnisnamen in Spalten (ähnlich der Ausgabe von  \"ls */ -d\")." 
@@ -40,7 +44,9 @@ function hilfe() {
 			echo -e "\t-l\tAnzeige einer ausführlichen Verzeichnisliste im Langformat (ähnlich wie \"ls -l\")." 
 			echo -e "\t-h\tAnzeige dieser Kurzanleitung."
 			echo -e "\t-demo\tführt automatisch vor, was das Programm leistet."
+			echo -e "\t-b\tzeigt eine Liste formal korrekter Aufrufbeispiele an."
 			echo -e "\t-v\tnennt die Versionsnummer des Progamms."
+			echo -e "\t-V\tzeigt den Namen und die Versionsnummer des Progamms an."
 			echo
 			echo "Wird pd ohne Option aufgerufen, dann listet es je Zeile und Verzeichnis erst die Zugriffsrechte auf, darauf den Account-Namen des Verzeichnisbesitzer und seine User-Id und schließlich abgeteilt und eingeleitet durch \" : \" den Verzeichnisnamen in Anführungszeichen.  Beispielsweise: rwxr-xr-x hannes (1000) : \"Desktop\""
 			echo
@@ -50,7 +56,7 @@ function hilfe() {
 		echo -e "$script_name\n\tLists directories in the present working directory, including symbolic linked ones."
 			echo 
 			echo "CALL:"
-			echo -e "\t$script_name [-c|-C|-s|-n|-l|-h|--help|-v]"
+			echo -e "\t$script_name [-c|-C|-s|-n|-l|-h|--help|-e|-v|-V] [directory]" 
 			echo
 			echo "OPTIONS:"
 			echo -e "\t-c\tlists directory names in columns (similar as the command  \"ls */ -d\")." 
@@ -59,8 +65,10 @@ function hilfe() {
 			echo -e "\t-n\tsame like \"-s\"." 
 			echo -e "\t-l\tlong format (similar to \"ls -l\")." 
 			echo -e "\t-h\tshows this short help text."
+			echo -e "\t-e\tshows a list of formal correct examples to call the program."
 			echo -e "\t-demo\tstarts demonstration of usage."
 			echo -e "\t-v\tshows the version number of the program."
+			echo -e "\t-V\tdisplays name an version number of the program."
 			echo 
 			echo "Started without any option $script_name will list in any row: the access rights, the file owners name and id and finally the quoted directory name. For example: rwxr-xr-x hannes (1000) : \"Desktop\""
 			echo
@@ -181,6 +189,30 @@ function demo() {
 }
 
 
+if [[ "$#" -gt 2 ]]; then
+	if [ "$(echo "$LANG" | cut -c 1-2)" != "de" ]; then
+		echo -e "Error: The shell gives the program to much options."
+		echo -e "Do not use the asterisk \"*\"!\n"
+	else
+		echo "Fehler: Die Shell übergibt dem Programm zu viele Optionen."
+		echo -e "Falls Sie den Asterisk \"*\" verwendet haben, lassen Sie ihn weg!\n"
+	fi
+ 	show_call_format
+	exit
+elif [[ "$#" -eq 0 ]]; then
+	target="./"
+elif [[ "$#" -eq 2 ]]; then
+	target="$2/"
+elif [[ "$#" -eq 1 ]]; then
+	case "$1" in
+	  -c|-l|-s|-n)
+		target="./"
+		;;
+	  *)
+		target="$1/"
+	esac
+fi
+
 if [ "$1" == "" ]; then		# default action of the script:
 	LANG=C stat -L --printf="%A %U (%u) : %N (%F)\n" "$target"*   | \
 	grep -e "(directory)$" | sed "s/ (directory)$//"              | \
@@ -212,10 +244,16 @@ else
 	  -h|--help|--hilf)
 		hilfe
 		;;
+	  -e|-b)
+		show_call_format
+		;;
 	  --demo)
 		demo 
 		;;
-	  -v|-V)
+	  -v)
+		echo "$version"
+		;;
+	  -V)
 		echo "pd (present directories), version $version"
 		if [[ "$script_name" != "pd" ]]; then
 			echo "(Current script name: $script_name.)"
