@@ -7,7 +7,7 @@
 # Bernd Storck, 2018-04-15
 #
 
-version=2.2.0
+version=2.2.1
 script_name="$(basename "$0")"
 
 function show_call_format() {
@@ -34,7 +34,8 @@ function hilfe() {
 		echo -e "$script_name ("present directories")\n\n\tEin Shell-Script, das die Verzeichnisse auflistet, die im aktuellen Verzeichnis liegen.\n\t(Inklusive symbolisch verlinkter Verzeichnisse.)"
 			echo 
 			echo "AUFRUF:"
-			echo -e "\t$script_name [-c|-C|-s|-n|-l|--hilf|--help|-h|-b|-v|-V]" [verzeichnispfad]
+			echo -e "\t$script_name [-c|-C|-s|-n|-l] [verzeichnispfad]"
+			echo -e "\t$script_name [--hilf|--help|-h|-b|-v|-V]"
 			echo
 			echo "OPTIONEN:"
 			echo -e "\t-c\tAnzeige der Verzeichnisnamen in Spalten (ähnlich der Ausgabe von  \"ls */ -d\")." 
@@ -56,7 +57,8 @@ function hilfe() {
 		echo -e "$script_name\n\tLists directories in the present working directory, including symbolic linked ones."
 			echo 
 			echo "CALL:"
-			echo -e "\t$script_name [-c|-C|-s|-n|-l|-h|--help|-e|-v|-V] [directory]" 
+			echo -e "\t$script_name [-c|-C|-s|-n|-l] [directory]" 
+			echo -e "\t$script_name [-h|--help|-e|-v|-V]" 
 			echo
 			echo "OPTIONS:"
 			echo -e "\t-c\tlists directory names in columns (similar as the command  \"ls */ -d\")." 
