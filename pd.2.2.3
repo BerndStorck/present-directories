@@ -4,15 +4,11 @@
 #
 # Script for listing all directories in the present working directory.
 #
-# Bernd Storck, 2018-04-26
+# Bernd Storck, 2018-04-16
 #
 
-version=2.2.4
+version=2.2.3
 script_name="$(basename "$0")"
-
-function cut_trailing_slash() {
-	echo "$1" | sed "s:\/$::"
-}
 
 function default_action() {
 
@@ -193,14 +189,14 @@ if [[ "$#" -gt 2 ]]; then
 elif [[ "$#" -eq 0 ]]; then
 	target="./"
 elif [[ "$#" -eq 2 ]]; then
-	target="$(cut_trailing_slash "$2")/"
+	target="$2/"
 elif [[ "$#" -eq 1 ]]; then
 	case "$1" in
 	  -c|-l|-s|-n)
 		target="./"
 		;;
 	  *)
-		target="$(cut_trailing_slash "$1")/"
+		target="$1/"
 	esac
 fi
 
