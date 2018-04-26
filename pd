@@ -4,11 +4,26 @@
 #
 # Script for listing all directories in the present working directory.
 #
-# Bernd Storck, 2018-04-15
+# Bernd Storck, 2018-04-26
 #
 
-version=2.2.0
+version=2.2.4
 script_name="$(basename "$0")"
+
+function cut_trailing_slash() {
+	echo "$1" | sed "s:\/$::"
+}
+
+function default_action() {
+
+	LANG=C stat -L --printf="%A %U (%u) : %N (%F)\n" "$target"*   | \
+	grep -e "(directory)$" | sed "s/ (directory)$//"              | \
+	sed "s= : '= : \"=" | sed "s= : \"\.\/= : \"=" |  sed "s/'$/\"/" | cut -c 2-
+
+#	LANG=C stat -L --printf="%A %U (%u) : %N (%F)\n" "$target"*   | \
+#	grep -e "(directory)$" | sed "s/ (directory)$//"              | \
+#	sed "s= : '= : \"=" | sed "s= : \"\.= : \"=" |  sed "s/'$/\"/" | cut -c 2-
+}
 
 function show_call_format() {
 	if [ "$(echo "$LANG" | cut -c 1-2)" == "de" ]; then
@@ -34,7 +49,8 @@ function hilfe() {
 		echo -e "$script_name ("present directories")\n\n\tEin Shell-Script, das die Verzeichnisse auflistet, die im aktuellen Verzeichnis liegen.\n\t(Inklusive symbolisch verlinkter Verzeichnisse.)"
 			echo 
 			echo "AUFRUF:"
-			echo -e "\t$script_name [-c|-C|-s|-n|-l|--hilf|--help|-h|-b|-v|-V]" [verzeichnispfad]
+			echo -e "\t$script_name [-c|-C|-s|-n|-l] [verzeichnispfad]"
+			echo -e "\t$script_name [--hilf|--help|-h|-b|-v|-V]"
 			echo
 			echo "OPTIONEN:"
 			echo -e "\t-c\tAnzeige der Verzeichnisnamen in Spalten (ähnlich der Ausgabe von  \"ls */ -d\")." 
@@ -56,7 +72,8 @@ function hilfe() {
 		echo -e "$script_name\n\tLists directories in the present working directory, including symbolic linked ones."
 			echo 
 			echo "CALL:"
-			echo -e "\t$script_name [-c|-C|-s|-n|-l|-h|--help|-e|-v|-V] [directory]" 
+			echo -e "\t$script_name [-c|-C|-s|-n|-l] [directory]" 
+			echo -e "\t$script_name [-h|--help|-e|-v|-V]" 
 			echo
 			echo "OPTIONS:"
 			echo -e "\t-c\tlists directory names in columns (similar as the command  \"ls */ -d\")." 
@@ -78,111 +95,85 @@ function hilfe() {
 
 function demo() {
 
+	local CLOSING_DESCRIPTION=""
+	local SHORT_DESCRIPTION=""
+        local COUNT=0
+
 	clear
 
+	cd ~
+
 	if [ "$(echo "$LANG" | cut -c 1-2)" != "de" ]; then
+	  for i in " -s" "" " -l"; do
+		COUNT=$(( $COUNT + 1 ))
+		case $i in
+		" -s")
+		    SHORT_DESCRIPTION="list only names"
+		    CLOSING_DESCRIPTION=""
+		    ;;
+		"")
+		    SHORT_DESCRIPTION="default command"
+		    CLOSING_DESCRIPTION="\nThis stands for: rights <directory owner> (owners user id) : \"directory name\""
+		    ;;
+		" -l")
+		    SHORT_DESCRIPTION="verbose output"
+		    CLOSING_DESCRIPTION="\nCall \"man ls\" for further information about the meaning of the columns in long output format."
+		    ;;
+		esac
+		
 		echo "Demonstration, how to use \"$script_name\"."
 		echo "-------------------------------"
-		sleep 1
-		echo 
-		echo -n "1. \"$script_name -s\""
-		sleep 3
-		echo " (list only names)"
-		sleep 2
-		echo
-		echo "Changing directory, going in your home dir."
-		cd ~
-		pwd
-		sleep 3
-		echo -e "\nCalling \"$script_name -s\":\n"
-		sleep 4
-		pd -s
-
-		sleep 5
-		clear
-		echo "Demonstration, how to use \"$script_name\"."
-		echo "-------------------------------"
-		sleep 1
-		echo 
-		echo "2. \"$script_name\" (default command)"
-		sleep 2
 		echo
 		echo "In your home dir \"$HOME\"."
-		sleep 4
-		echo -e "\nCalling \"$script_name\":\n"
-		sleep 4
-		pd
-		sleep 3 
-		echo -e "\nThis stands for: rights <directory owner> (owners user id) : \"directory name\""
-
-		sleep 11
-		clear
-		echo "Demonstration, how to use \"$script_name\"."
-		echo "-------------------------------"
-		sleep 1
 		echo 
-		echo "3. \"$script_name -l\" (long output)"
-		sleep 2
+		echo -n "$COUNT. \"$script_name${i}\""
+		if [ "$SHORT_DESCRIPTION" != "" ]; then
+			echo -n " ($SHORT_DESCRIPTION)"
+		fi
+		echo ":"
+		pd $i
+		echo -e "$CLOSING_DESCRIPTION"
+		echo 
 		echo
-		echo "In your home dir \"$HOME\"."
-		sleep 3
-		echo -e "\nCalling \"$script_name -l\":\n"
-		sleep 5
-		pd -l
-		sleep 4
-		echo -e "\nCall \"man ls\" for further information about the meaning of the columns in long output format."
+
+	  done 
 
 	else
-		echo "Demonstration: Wie \"$script_name\" benutzt wird."
-		echo "-------------------------------------"
-		sleep 1
-		echo 
-		echo -n "1. \"$script_name -s\""
-		sleep 3
-		echo " (nur die Namen anzeigen)"
-		sleep 2
-		echo
-		echo "Wechsel in Ihr persönliches Verzeichnis:"
-		cd ~
-		pwd
-		sleep 3
-		echo -e "\nDas Kommando \"$script_name -s\" wird gegeben:\n"
-		sleep 4
-		pd -s
 
-		sleep 5
-		clear
+	  for i in " -s" "" " -l"; do
+		COUNT=$(( $COUNT + 1 ))
+		case $i in
+		" -s")
+		    SHORT_DESCRIPTION="nur die Namen ausgeben"
+		    CLOSING_DESCRIPTION=""
+		    ;;
+		"")
+		    SHORT_DESCRIPTION="default command"
+		    CLOSING_DESCRIPTION="\nDas bedeutet: Rechte Verzeichnisbesitzer (Besitzer-ID) : \"Verzeichnisname\""
+		    ;;
+		" -l")
+		    SHORT_DESCRIPTION="ausführliches Ausgabeformat"
+		    CLOSING_DESCRIPTION="\nUm genaueres über die Bedeutung der Spalten des langen Ausgabeformats zu erfahren, lesen Sie bitte Erklärungen zum langen Ausgabeformat des Kommandos ls! $script_name benutzt für sein langes Ausgabeformat dieselben Spalten - mit Ausnahme des ersten Zeichens jeder Zeile, das ls benutzt, um die Dateiart anzugeben und das $script_name nicht verwendet, weil $script_name grundsätzlich nur Verzeichnisse auflistet."
+		    ;;
+		esac
+		
 		echo "Demonstration: Wie \"$script_name\" benutzt wird."
 		echo "-------------------------------------"
-		sleep 1
 		echo 
-		echo "2. \"$script_name\""
-		sleep 2
-		echo
 		echo "In Ihrem persönlichen Verzeichnis \"$HOME\"."
-		sleep 4
-		echo -e "\nDas Kommando \"$script_name\" wird gegeben:\n"
-		sleep 4
-		pd
-		sleep 3 
-		echo -e "\nDas bedeutet: Rechte Verzeichnisbesitzer (Besitzer-ID) : \"Verzeichnisname\""
+		echo
+		echo -n "$COUNT. \"$script_name${i}\""
+		if [ "$SHORT_DESCRIPTION" != "" ]; then
+			echo -n " ($SHORT_DESCRIPTION)"
+		fi
+		echo ":"
+		pd $i 
+		echo -e "$CLOSING_DESCRIPTION"
+		echo 
+		echo
 
-		sleep 11
-		clear
-		echo "Demonstration: Wie \"$script_name\" benutzt wird."
-		echo "-------------------------------------"
-		sleep 1
-		echo 
-		echo "3. \"$script_name -l\" (langes Ausgabeformat)"
-		sleep 2
-		echo
-		echo "In Ihrem persönlichen Verzeichnis \"$HOME\"."
-		sleep 3
-		echo -e "\nDas Kommando \"$script_name -l\" wird gegeben:\n"
-		sleep 5
-		pd -l
-		sleep 4
-		echo -e "\nUm genaueres über die Bedeutung der Spalten des langen Ausgabeformats zu erfahren, lesen Sie bitte Erklärungen zum langen Ausgabeformat des Kommandos ls! $script_name benutzt für sein langes Ausgabeformat dieselben Spalten - mit Ausnahme des ersten Zeichens jeder Zeile, das ls benutzt, um die Dateiart anzugeben und das $script_name nicht verwendet, weil $script_name grundsätzlich nur Verzeichnisse auflistet."
+	  done
+
 	fi
 
 	cd - 1> /dev/null 2>&1
@@ -202,28 +193,37 @@ if [[ "$#" -gt 2 ]]; then
 elif [[ "$#" -eq 0 ]]; then
 	target="./"
 elif [[ "$#" -eq 2 ]]; then
-	target="$2/"
+	target="$(cut_trailing_slash "$2")/"
 elif [[ "$#" -eq 1 ]]; then
 	case "$1" in
 	  -c|-l|-s|-n)
 		target="./"
 		;;
 	  *)
-		target="$1/"
+		target="$(cut_trailing_slash "$1")/"
 	esac
 fi
 
 if [ "$1" == "" ]; then		# default action of the script:
-	LANG=C stat -L --printf="%A %U (%u) : %N (%F)\n" "$target"*   | \
-	grep -e "(directory)$" | sed "s/ (directory)$//"              | \
-	sed "s= : '= : \"=" | sed "s= : \"\.\/= : \"=" |  sed "s/'$/\"/" | cut -c 2-
+
+	default_action
 
 else
 
 	case "$1" in 		# non default actions of the script:
 	  -c)
-		LANG=C stat -L --format="%n %F" "$target"* | \
-		grep "directory$" | sed "s/ directory$//" | sed "s:^\./::" | column 
+		if [ $(which column) ]; then 
+			LANG=C stat -L --format="%n %F" "$target"* | \
+			grep "directory$" | sed "s/ directory$//" | sed "s:^\./::" | column 
+		else
+			if [ $(echo "$LANG" | cut -c 1-2) != "de" ]; then
+				echo "For this function you need to install \"bsdmainutils\"."
+				echo "Use the command \"apt install bsdmainutils\" to do it."
+			else
+				echo "Für diese Funktion muss das Paket \"bsdmainutils\" installiert sein."
+				echo "Sie können es durch das Kommando \"apt install bsdmainutils\" installieren."
+			fi
+		fi
 		;;
 	  -C)
 		if [[ "$2" != "" ]]; then
@@ -260,9 +260,7 @@ else
 		fi
 		;;
 	  *)    # default action of the script:
-		LANG=C stat -L --printf="%A %U (%u) : %N (%F)\n" "$target"*   | \
-		grep -e "(directory)$" | sed "s/ (directory)$//"              | \
-		sed "s= : '= : \"=" | sed "s= : \"\.= : \"=" |  sed "s/'$/\"/" | cut -c 2-
+		default_action
 		;;
 	esac
 
