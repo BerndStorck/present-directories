@@ -4,14 +4,14 @@
 #
 # Script for listing all directories in the present working directory.
 #
-# Bernd Storck, 2018-04-26
+# Bernd Storck, 2018-06-15
 #
 
-version=2.2.4
+version="2.2.5"
 script_name="$(basename "$0")"
 
 function cut_trailing_slash() {
-	echo "$1" | sed "s:\/$::"
+	sed "s:\/$::" <<< "$1"
 }
 
 function default_action() {
@@ -20,13 +20,10 @@ function default_action() {
 	grep -e "(directory)$" | sed "s/ (directory)$//"              | \
 	sed "s= : '= : \"=" | sed "s= : \"\.\/= : \"=" |  sed "s/'$/\"/" | cut -c 2-
 
-#	LANG=C stat -L --printf="%A %U (%u) : %N (%F)\n" "$target"*   | \
-#	grep -e "(directory)$" | sed "s/ (directory)$//"              | \
-#	sed "s= : '= : \"=" | sed "s= : \"\.= : \"=" |  sed "s/'$/\"/" | cut -c 2-
 }
 
 function show_call_format() {
-	if [ "$(echo "$LANG" | cut -c 1-2)" == "de" ]; then
+	if [ "$(cut -c 1-2 <<< "$LANG")" == "de" ]; then
 		echo "Jede der folgenden Zeilen ist ein Beispiel für einen formal richtigen Aufruf des Programms."
 	else
 		echo "Each of the following lines is an example for a correct program call."
@@ -44,7 +41,7 @@ function show_call_format() {
 }
 
 function hilfe() {
-	if [ "$(echo "$LANG" | cut -c 1-2)" == "de" ]; then
+	if [ "$(cut -c 1-2 <<< "$LANG")" == "de" ]; then
 
 		echo -e "$script_name ("present directories")\n\n\tEin Shell-Script, das die Verzeichnisse auflistet, die im aktuellen Verzeichnis liegen.\n\t(Inklusive symbolisch verlinkter Verzeichnisse.)"
 			echo 
@@ -103,7 +100,7 @@ function demo() {
 
 	cd ~
 
-	if [ "$(echo "$LANG" | cut -c 1-2)" != "de" ]; then
+	if [ "$(cut -c 1-2 <<< "$LANG")" != "de" ]; then
 	  for i in " -s" "" " -l"; do
 		COUNT=$(( $COUNT + 1 ))
 		case $i in
@@ -181,7 +178,7 @@ function demo() {
 
 
 if [[ "$#" -gt 2 ]]; then
-	if [ "$(echo "$LANG" | cut -c 1-2)" != "de" ]; then
+	if [ "$(cut -c 1-2 <<< "$LANG")" != "de" ]; then
 		echo -e "Error: The shell gives the program to much options."
 		echo -e "Do not use the asterisk \"*\"!\n"
 	else
@@ -216,7 +213,7 @@ else
 			LANG=C stat -L --format="%n %F" "$target"* | \
 			grep "directory$" | sed "s/ directory$//" | sed "s:^\./::" | column 
 		else
-			if [ $(echo "$LANG" | cut -c 1-2) != "de" ]; then
+			if [ $(cut -c 1-2 <<< "$LANG") != "de" ]; then
 				echo "For this function you need to install \"bsdmainutils\"."
 				echo "Use the command \"apt install bsdmainutils\" to do it."
 			else
