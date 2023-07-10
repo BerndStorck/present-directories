@@ -4,262 +4,290 @@
 #
 # Script for listing all directories in the present working directory.
 #
-# Bernd Storck, 2018-06-15
+# Bernd Storck, 2018-04-26, 2020-05-17, 2020-08-07, 2020-10-21, 2023-07-10
 #
 
-version="2.2.5"
-script_name="$(basename "$0")"
+version=2.2.10
+script_name="${0##*/}"  ## was: "$(basename "$0")"
 
-function cut_trailing_slash() {
-	sed "s:\/$::" <<< "$1"
+function list_directories {
+# stat gives for
+#
+#  • %A - Access rights in human readable form
+#  • %F - File type
+#  • %N - Quoted file name with dereference if symbolic link
+#  • %u - User ID of owner
+#  • %U - User name of owner
+#
+
+  dirs="$(LANG=C stat -L --printf="%A %U (%u) : %N (%F)\n" "${target}"*/ )"
+  dirs="${dirs// (directory)/}"
+  dirs="${dirs// : \'.\// : \"}"  # replaces > : '< by > : "<.
+  sed -e "s/'$/\"/" <<< "$dirs" | cut -c 2-
 }
 
-function default_action() {
+function show_call_format {
 
-	LANG=C stat -L --printf="%A %U (%u) : %N (%F)\n" "$target"*   | \
-	grep -e "(directory)$" | sed "s/ (directory)$//"              | \
-	sed "s= : '= : \"=" | sed "s= : \"\.\/= : \"=" |  sed "s/'$/\"/" | cut -c 2-
+  if [ "${LANG:0:2}" == "de" ]; then  # was: if [ "$(echo "$LANG" | cut -c 1-2)" = "de" ]; then
 
+    echo "Jede der folgenden Zeilen ist ein Beispiel für einen
+formal richtigen Aufruf des Programms."
+
+  else
+    echo "The following are examples for correct program calls."
+  fi
+
+  echo "
+    $script_name
+    $script_name /var
+    $script_name -c
+    $script_name -c /home
+    $script_name -s
+    $script_name -s /etc
+    $script_name -l
+    $script_name -l /usr/local"
 }
 
-function show_call_format() {
-	if [ "$(cut -c 1-2 <<< "$LANG")" == "de" ]; then
-		echo "Jede der folgenden Zeilen ist ein Beispiel für einen formal richtigen Aufruf des Programms."
-	else
-		echo "Each of the following lines is an example for a correct program call."
-	fi
+function hilfe {
+  if [ "${LANG:0:2}" == "de" ]; then
 
-	echo 
-	echo -e "\t$script_name"
-	echo -e "\t$script_name /var\n"
-	echo -e "\t$script_name -c"
-	echo -e "\t$script_name -c /home\n"
-	echo -e "\t$script_name -s"
-	echo -e "\t$script_name -s /etc\n"
-	echo -e "\t$script_name -l"
-	echo -e "\t$script_name -l /usr/local\n"
+    output="$script_name (\"present directories\")
+
+    Listet die die Verzeichnisse auf, die im aktuellen Verzeichnis liegen.
+    (Inklusive symbolisch verlinkter Verzeichnisse.)
+
+AUFRUF:
+    $script_name [-c|-C|-s|-n|-l] [verzeichnispfad]
+    $script_name [--hilf|--help|-h|-b|-v|-V]
+
+OPTIONEN:
+    -c      Anzeige der Verzeichnisnamen in Spalten (ähnelt \"ls */ -d\").
+    -C      Kompakte Anzeige der Verzeichnisnamen in Spalten (\"ls */ -d\").
+    -s      Anzeige nur der Verzeichnisnamen (kurzes Format).
+    -n      wie \"-s\", nur die Verzeichnisnamen werden angezeigt.
+    -l      Anzeige einer ausführlichen Verzeichnisliste (ähnelt \"ls -l\").
+    -h      Anzeige dieser Kurzanleitung.
+    --demo  führt automatisch vor, was das Programm leistet.
+    -b      zeigt eine Liste formal korrekter Aufrufbeispiele an.
+    -v      nennt die Versionsnummer des Programms.
+    -V      zeigt den Namen und die Versionsnummer des Programms an.
+
+Wird pd ohne Option aufgerufen, dann listet es je Zeile und Verzeichnis
+erst die Zugriffsrechte auf, darauf den Account-Namen des Besitzers des
+Verzeichnisses und seine User-Id und schließlich abgeteilt und
+eingeleitet durch \" : \" den Verzeichnisnamen in Anführungszeichen.
+Beispielsweise: rwxr-xr-x hannes (1000) : \"Desktop\"
+
+Am schnellsten verstehen Sie die drei verschiedenen Ausgabeformate,
+wenn Sie zum Beispiel in Ihrem Heimatverzeichnis nacheinander die drei
+Kommandos \"$script_name -s\", \"$script_name\" und \"$script_name -l\" geben."
+
+    printf "%b\n" "$output"
+
+  else
+    output="$script_name
+    Lists directories in the present working directory, including symbolic linked ones.
+
+CALL:
+    $script_name [-c|-C|-s|-n|-l] [directory]
+    $script_name [-h|--help|-e|-v|-V]
+
+OPTIONS:
+    -c    lists directory names in columns (similar as the command  \"ls */ -d\").
+    -C    compact list of directory names in columns (\"ls */ -d\").
+    -s    short format, lists only directory names.
+    -n    same like \"-s\".
+    -l    long format (similar to \"ls -l\").
+    -h    shows this short help text.
+    -e    shows a list of formal correct examples to call the program.
+    --demo    starts demonstration of usage.
+    -v    shows the version number of the program.
+    -V    displays name an version number of the program.
+
+Started without any option $script_name will list in any row: the access rights, the file owners name and id and finally the quoted directory name. For example: rwxr-xr-x hannes (1000) : \"Desktop\"
+
+You may quick understand the three output formats, if you use the command \"$script_name --demo\", which starts a short demonstration of usage."
+
+    printf "%b\n" "$output"
+  fi
 }
 
-function hilfe() {
-	if [ "$(cut -c 1-2 <<< "$LANG")" == "de" ]; then
+function demo {
 
-		echo -e "$script_name ("present directories")\n\n\tEin Shell-Script, das die Verzeichnisse auflistet, die im aktuellen Verzeichnis liegen.\n\t(Inklusive symbolisch verlinkter Verzeichnisse.)"
-			echo 
-			echo "AUFRUF:"
-			echo -e "\t$script_name [-c|-C|-s|-n|-l] [verzeichnispfad]"
-			echo -e "\t$script_name [--hilf|--help|-h|-b|-v|-V]"
-			echo
-			echo "OPTIONEN:"
-			echo -e "\t-c\tAnzeige der Verzeichnisnamen in Spalten (ähnlich der Ausgabe von  \"ls */ -d\")." 
-			echo -e "\t-C\tKompakte Anzeige der Verzeichnisnamen in Spalten (\"ls */ -d\")." 
-			echo -e "\t-s\tAnzeige nur der Verzeichnisnamen (kurzes Format)." 
-			echo -e "\t-n\twie \"-s\", nur die Verzeichnisnamen werden angezeigt." 
-			echo -e "\t-l\tAnzeige einer ausführlichen Verzeichnisliste im Langformat (ähnlich wie \"ls -l\")." 
-			echo -e "\t-h\tAnzeige dieser Kurzanleitung."
-			echo -e "\t-demo\tführt automatisch vor, was das Programm leistet."
-			echo -e "\t-b\tzeigt eine Liste formal korrekter Aufrufbeispiele an."
-			echo -e "\t-v\tnennt die Versionsnummer des Progamms."
-			echo -e "\t-V\tzeigt den Namen und die Versionsnummer des Progamms an."
-			echo
-			echo "Wird pd ohne Option aufgerufen, dann listet es je Zeile und Verzeichnis erst die Zugriffsrechte auf, darauf den Account-Namen des Verzeichnisbesitzer und seine User-Id und schließlich abgeteilt und eingeleitet durch \" : \" den Verzeichnisnamen in Anführungszeichen.  Beispielsweise: rwxr-xr-x hannes (1000) : \"Desktop\""
-			echo
-			echo "Am schnellsten verstehen Sie die drei verschiedenen Ausgabeformate, wenn Sie zum Beispiel in Ihrem Heimatverzeichnis nacheinander die drei Kommandos \"$script_name -s\", \"$script_name\" und \"$script_name -l\" geben."
+  local CLOSING_DESCRIPTION=""
+  local SHORT_DESCRIPTION=""
+  local COUNT=0
 
-	else
-		echo -e "$script_name\n\tLists directories in the present working directory, including symbolic linked ones."
-			echo 
-			echo "CALL:"
-			echo -e "\t$script_name [-c|-C|-s|-n|-l] [directory]" 
-			echo -e "\t$script_name [-h|--help|-e|-v|-V]" 
-			echo
-			echo "OPTIONS:"
-			echo -e "\t-c\tlists directory names in columns (similar as the command  \"ls */ -d\")." 
-			echo -e "\t-C\tcompact list of directory names in columns (\"ls */ -d\")." 
-			echo -e "\t-s\tshort format, lists only directory names." 
-			echo -e "\t-n\tsame like \"-s\"." 
-			echo -e "\t-l\tlong format (similar to \"ls -l\")." 
-			echo -e "\t-h\tshows this short help text."
-			echo -e "\t-e\tshows a list of formal correct examples to call the program."
-			echo -e "\t-demo\tstarts demonstration of usage."
-			echo -e "\t-v\tshows the version number of the program."
-			echo -e "\t-V\tdisplays name an version number of the program."
-			echo 
-			echo "Started without any option $script_name will list in any row: the access rights, the file owners name and id and finally the quoted directory name. For example: rwxr-xr-x hannes (1000) : \"Desktop\""
-			echo
-			echo "You may quick understand the three output formats, if you use the command \"$script_name --demo\", which starts a short demonstration of usage."
-			fi
-}
+  clear
 
-function demo() {
+  cd ~
 
-	local CLOSING_DESCRIPTION=""
-	local SHORT_DESCRIPTION=""
-        local COUNT=0
+  if [ "${LANG:0:2}" != "de" ]; then
+    for i in " -s" "" " -l"; do
+    COUNT=$(( COUNT + 1 ))
+    case $i in
+    " -s")
+        SHORT_DESCRIPTION="list only names"
+        CLOSING_DESCRIPTION=""
+        ;;
+    "")
+        SHORT_DESCRIPTION="default command"
+        CLOSING_DESCRIPTION="\nThis stands for: rights <directory owner> (owners user id) : \"directory name\""
+        ;;
+    " -l")
+        SHORT_DESCRIPTION="verbose output"
+        CLOSING_DESCRIPTION="\nCall \"man ls\" for further information about the meaning of the columns in long output format."
+        ;;
+    esac
 
-	clear
+    echo "Demonstration, how to use \"$script_name\"."
+    echo "-------------------------------"
+    echo
+    echo "In your home dir \"$HOME\"."
+    echo
+    echo -n "$COUNT. \"$script_name${i}\""
+    if [ "$SHORT_DESCRIPTION" != "" ]; then
+      echo -n " ($SHORT_DESCRIPTION)"
+    fi
+    echo ":"
+    pd $i
+    echo -e "$CLOSING_DESCRIPTION"
+    echo
+    echo
 
-	cd ~
+    done
 
-	if [ "$(cut -c 1-2 <<< "$LANG")" != "de" ]; then
-	  for i in " -s" "" " -l"; do
-		COUNT=$(( $COUNT + 1 ))
-		case $i in
-		" -s")
-		    SHORT_DESCRIPTION="list only names"
-		    CLOSING_DESCRIPTION=""
-		    ;;
-		"")
-		    SHORT_DESCRIPTION="default command"
-		    CLOSING_DESCRIPTION="\nThis stands for: rights <directory owner> (owners user id) : \"directory name\""
-		    ;;
-		" -l")
-		    SHORT_DESCRIPTION="verbose output"
-		    CLOSING_DESCRIPTION="\nCall \"man ls\" for further information about the meaning of the columns in long output format."
-		    ;;
-		esac
-		
-		echo "Demonstration, how to use \"$script_name\"."
-		echo "-------------------------------"
-		echo
-		echo "In your home dir \"$HOME\"."
-		echo 
-		echo -n "$COUNT. \"$script_name${i}\""
-		if [ "$SHORT_DESCRIPTION" != "" ]; then
-			echo -n " ($SHORT_DESCRIPTION)"
-		fi
-		echo ":"
-		pd $i
-		echo -e "$CLOSING_DESCRIPTION"
-		echo 
-		echo
+  else
 
-	  done 
+    for i in " -s" "" " -l"; do
+    COUNT=$(( COUNT + 1 ))
+    case $i in
+    " -s")
+        SHORT_DESCRIPTION="nur die Namen ausgeben"
+        CLOSING_DESCRIPTION=""
+        ;;
+    "")
+        SHORT_DESCRIPTION="Standardaktion"
+        CLOSING_DESCRIPTION="\nDas bedeutet: Rechte Verzeichnisbesitzer (Besitzer-ID) : \"Verzeichnisname\""
+        ;;
+    " -l")
+        SHORT_DESCRIPTION="ausführliches Ausgabeformat"
+        CLOSING_DESCRIPTION="\nUm genaueres über die Bedeutung der Spalten des langen Ausgabeformats
+zu erfahren, lesen Sie bitte Erklärungen zum langen Ausgabeformat des
+Kommandos ls!  $script_name benutzt für sein langes Ausgabeformat dieselben
+Spalten - mit Ausnahme des ersten Zeichens jeder Zeile, das ls benutzt,
+um die Dateiart anzugeben und das $script_name nicht verwendet, weil
+$script_name grundsätzlich nur Verzeichnisse auflistet."
 
-	else
+        ;;
+    esac
 
-	  for i in " -s" "" " -l"; do
-		COUNT=$(( $COUNT + 1 ))
-		case $i in
-		" -s")
-		    SHORT_DESCRIPTION="nur die Namen ausgeben"
-		    CLOSING_DESCRIPTION=""
-		    ;;
-		"")
-		    SHORT_DESCRIPTION="default command"
-		    CLOSING_DESCRIPTION="\nDas bedeutet: Rechte Verzeichnisbesitzer (Besitzer-ID) : \"Verzeichnisname\""
-		    ;;
-		" -l")
-		    SHORT_DESCRIPTION="ausführliches Ausgabeformat"
-		    CLOSING_DESCRIPTION="\nUm genaueres über die Bedeutung der Spalten des langen Ausgabeformats zu erfahren, lesen Sie bitte Erklärungen zum langen Ausgabeformat des Kommandos ls! $script_name benutzt für sein langes Ausgabeformat dieselben Spalten - mit Ausnahme des ersten Zeichens jeder Zeile, das ls benutzt, um die Dateiart anzugeben und das $script_name nicht verwendet, weil $script_name grundsätzlich nur Verzeichnisse auflistet."
-		    ;;
-		esac
-		
-		echo "Demonstration: Wie \"$script_name\" benutzt wird."
-		echo "-------------------------------------"
-		echo 
-		echo "In Ihrem persönlichen Verzeichnis \"$HOME\"."
-		echo
-		echo -n "$COUNT. \"$script_name${i}\""
-		if [ "$SHORT_DESCRIPTION" != "" ]; then
-			echo -n " ($SHORT_DESCRIPTION)"
-		fi
-		echo ":"
-		pd $i 
-		echo -e "$CLOSING_DESCRIPTION"
-		echo 
-		echo
+    echo "Demonstration: Wie \"$script_name\" benutzt wird."
+    echo "-------------------------------------"
+    echo
+    echo "In Ihrem persönlichen Verzeichnis \"$HOME\"."
+    echo
+    echo -n "$COUNT. \"$script_name${i}\""
+    if [ "$SHORT_DESCRIPTION" != "" ]; then
+      echo -n " ($SHORT_DESCRIPTION)"
+    fi
+    echo ":"
+    pd $i
+    echo -e "$CLOSING_DESCRIPTION"
+    echo
+    echo
 
-	  done
+    done
 
-	fi
+  fi
 
-	cd - 1> /dev/null 2>&1
+  cd - 1> /dev/null 2>&1
 }
 
 
-if [[ "$#" -gt 2 ]]; then
-	if [ "$(cut -c 1-2 <<< "$LANG")" != "de" ]; then
-		echo -e "Error: The shell gives the program to much options."
-		echo -e "Do not use the asterisk \"*\"!\n"
-	else
-		echo "Fehler: Die Shell übergibt dem Programm zu viele Optionen."
-		echo -e "Falls Sie den Asterisk \"*\" verwendet haben, lassen Sie ihn weg!\n"
-	fi
- 	show_call_format
-	exit
-elif [[ "$#" -eq 0 ]]; then
-	target="./"
-elif [[ "$#" -eq 2 ]]; then
-	target="$(cut_trailing_slash "$2")/"
-elif [[ "$#" -eq 1 ]]; then
-	case "$1" in
-	  -c|-l|-s|-n)
-		target="./"
-		;;
-	  *)
-		target="$(cut_trailing_slash "$1")/"
-	esac
+if [ "$#" -gt 2 ]; then
+  if [ "${LANG:0:2}" != "de" ]; then
+    echo -e "Error: The shell gives the program to much options."
+    echo -e "Do not use the asterisk \"*\"!\n"
+  else
+    echo "Fehler: Die Shell übergibt dem Programm zu viele Optionen."
+    echo -e "Falls Sie den Asterisk \"*\" verwendet haben, lassen Sie ihn weg!\n"
+  fi
+   show_call_format
+  exit
+elif [ "$#" -eq 0 ]; then
+  target="./"
+elif [ "$#" -eq 2 ]; then
+  target="{2%/}/"    ## cut trailing slash and add it again
+elif [ "$#" -eq 1 ]; then
+  case "$1" in
+    -c|-l|-s|-n)
+    target="./"
+    ;;
+    *)
+    target="${1%/}/"    ## cut trailing slash and add it again
+  esac
 fi
 
-if [ "$1" == "" ]; then		# default action of the script:
+if [ -z $1 ]; then    # default action of the script:
 
-	default_action
+  list_directories
 
 else
 
-	case "$1" in 		# non default actions of the script:
-	  -c)
-		if [ $(which column) ]; then 
-			LANG=C stat -L --format="%n %F" "$target"* | \
-			grep "directory$" | sed "s/ directory$//" | sed "s:^\./::" | column 
-		else
-			if [ $(cut -c 1-2 <<< "$LANG") != "de" ]; then
-				echo "For this function you need to install \"bsdmainutils\"."
-				echo "Use the command \"apt install bsdmainutils\" to do it."
-			else
-				echo "Für diese Funktion muss das Paket \"bsdmainutils\" installiert sein."
-				echo "Sie können es durch das Kommando \"apt install bsdmainutils\" installieren."
-			fi
-		fi
-		;;
-	  -C)
-		if [[ "$2" != "" ]]; then
-			target="$2/"
-		else
-			target=""
-		fi
-		ls -d "$target"*/
-		;;
-	  -s|-n)
-		LANG=C stat -L --format="%N >>>>>%F" "$target"*         | \
-		grep -e ">>>>>directory$" | sed "s/ >>>>>directory$//"  | \
-		sed "s:'$target:\":" | sed "s/'$/\"/"
-		;;
-	  -l)
-		ls -HldQ "$target"* | grep "^d" | sed "s:\"\./:\":" | cut -c 2-
-		;;
-	  -h|--help|--hilf)
-		hilfe
-		;;
-	  -e|-b)
-		show_call_format
-		;;
-	  --demo)
-		demo 
-		;;
-	  -v)
-		echo "$version"
-		;;
-	  -V)
-		echo "pd (present directories), version $version"
-		if [[ "$script_name" != "pd" ]]; then
-			echo "(Current script name: $script_name.)"
-		fi
-		;;
-	  *)    # default action of the script:
-		default_action
-		;;
-	esac
-
+  case "$1" in     # non default actions of the script:
+    -c)
+      if [ $(which column) ]; then
+        LANG=C stat -L --format="%n %F" "$target"* | \
+        sed -n "/directory/s/ directory$//p" | sed "s:^\./::" | column
+      else
+        if [ "${LANG:0:2}" != "de" ]; then
+          echo "For this function you need to install \"bsdmainutils\"."
+          echo "Use the command \"apt install bsdmainutils\" to do it."
+        else
+          echo "Für diese Funktion muss das Paket \"bsdmainutils\" installiert sein."
+          echo "Sie können es durch das Kommando \"apt install bsdmainutils\" installieren."
+        fi
+      fi
+      ;;
+    -C)
+      if [ -n $2 ]; then  ## if $2 is not empty
+        target="$2/"
+      else
+        target=""
+      fi
+      ls -d "$target"*/
+      ;;
+    -s|-n)
+      LANG=C stat -L --format="%N >>>>>%F" "$target"*         | \
+      sed -n "/>>>>>directory/s/>>>>>directory//p"            | \
+      sed "s:'$target:\":" | sed "s/'$/\"/"
+      ;;
+    -l)
+      ls -HldQ "$target"* | sed -n "/^d/s:\"\./:\":p"  | cut -c 2-
+      ;;
+    -h|--help|--hilf)
+      hilfe
+      ;;
+    -e|-b)
+      show_call_format
+      ;;
+    --demo|-demo)
+      demo
+      ;;
+    -v|-\#)
+      echo "$version"
+      ;;
+    -V)
+      echo "pd (present directories), version $version"
+      if [[ "$script_name" != "pd" ]]; then
+        echo "(Current script name: $script_name.)"
+      fi
+      ;;
+    *)    # default action of the script:
+      list_directories
+      ;;
+  esac
 fi
 
+exit 0
